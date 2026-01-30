@@ -234,3 +234,6 @@ eng_kor.txt
 05_text_classification/ted_en_fasttext.model.wv.vectors_ngrams.npy
 04_sequence_model/ratings_test.txt
 04_sequence_model/ratings_train.txt
+.env
+.llm_venv
+.output.mp3
