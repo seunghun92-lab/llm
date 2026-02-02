@@ -237,3 +237,8 @@ eng_kor.txt
 .env
 .llm_venv
 .output.mp3
+fine_food_reviews_1k.csv
+practice.ipynb
+app.py
+__pycache__
+requirements.txt

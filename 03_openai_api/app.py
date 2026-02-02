@@ -13,61 +13,98 @@ st.set_page_config(
 )
 
 # =========================
-# 1) CSS로 디자인 개선
+# 1) 다크모드 CSS + 디자인 개선
 # =========================
 st.markdown(
     """
     <style>
-      /* 전체 폭 살짝 제한 + 여백 */
-      .block-container { max-width: 820px; padding-top: 2rem; }
+      /* 전체 배경/텍스트(다크) */
+      html, body, [class*="css"]  {
+        color: #E5E7EB;
+      }
 
-      /* 상단 타이틀 영역 */
+      /* Streamlit 메인 배경 */
+      .stApp {
+        background: #0B1220; /* 딥 네이비 */
+      }
+
+      /* 전체 폭 + 상단 여백(타이틀 잘림 방지) */
+      .block-container {
+        max-width: 860px;
+        padding-top: 3.2rem;   /* ✅ 타이틀 잘림 방지 */
+        padding-bottom: 2rem;
+      }
+
+      /* 상단 타이틀 */
       .app-title {
         text-align: center;
-        font-size: 2.1rem;
-        font-weight: 800;
-        margin-bottom: 0.1rem;
+        font-size: 2.2rem;
+        font-weight: 900;
+        margin: 0;
+        line-height: 1.25;     /* ✅ 잘림 방지 */
+        letter-spacing: -0.5px;
       }
       .app-subtitle {
         text-align: center;
-        color: #7a7a7a;
-        margin-top: 0;
-        margin-bottom: 1.2rem;
+        color: #9CA3AF;
+        margin-top: 0.35rem;
+        margin-bottom: 1.6rem;
+        line-height: 1.35;
       }
 
       /* 말풍선 공통 */
       .bubble {
-        padding: 10px 12px;
+        padding: 11px 13px;
         border-radius: 14px;
-        margin: 8px 0;
+        margin: 8px 0 14px 0;
         max-width: 78%;
-        line-height: 1.45;
-        box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+        line-height: 1.5;
+        box-shadow: 0 2px 14px rgba(0,0,0,0.35);
         word-wrap: break-word;
         white-space: pre-wrap;
+        border: 1px solid rgba(255,255,255,0.06);
       }
-      /* 사용자 말풍선(오른쪽) */
+
+      /* 사용자 말풍선(오른쪽) - 포인트 컬러 */
       .bubble-user {
-        background: #DCF8C6;
+        background: rgba(34, 197, 94, 0.18);  /* green */
         margin-left: auto;
+        border: 1px solid rgba(34, 197, 94, 0.25);
       }
+
       /* 어시스턴트 말풍선(왼쪽) */
       .bubble-assistant {
-        background: #F3F4F6;
+        background: rgba(255, 255, 255, 0.06);
         margin-right: auto;
       }
 
       /* 작은 역할 라벨 */
       .role-tag {
         font-size: 0.78rem;
-        color: #6b7280;
-        margin-bottom: 4px;
+        color: #9CA3AF;
+        margin-bottom: 6px;
       }
 
-      /* 사이드바 설명 글씨 */
+      /* 사이드바 다크 스타일 */
+      section[data-testid="stSidebar"] {
+        background: #0F172A; /* slate */
+        border-right: 1px solid rgba(255,255,255,0.06);
+      }
+
+      /* 사이드바 내부 텍스트 */
       .sidebar-note {
-        color: #6b7280;
+        color: #9CA3AF;
         font-size: 0.92rem;
+      }
+
+      /* 슬라이더/버튼 여백 살짝 */
+      .stButton>button {
+        border-radius: 12px;
+      }
+
+      /* chat_input 위쪽 여백 */
+      div[data-testid="stChatInput"] {
+        margin-top: 0.5rem;
       }
     </style>
     """,
@@ -97,9 +134,13 @@ client = OpenAI(api_key=api_key)
 # =========================
 with st.sidebar:
     st.header("⚙️ 설정")
-    st.markdown("<div class='sidebar-note'>수업용 챗봇 데모예요. <br/>‘대화 초기화’로 기록을 지울 수 있어요.</div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='sidebar-note'>수업용 챗봇 데모예요.<br/>‘대화 초기화’로 기록을 지울 수 있어요.</div>",
+        unsafe_allow_html=True
+    )
 
     temperature = st.slider("temperature", 0.0, 1.2, 0.7, 0.1)
+
     if st.button("🧹 대화 초기화", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
@@ -109,8 +150,6 @@ with st.sidebar:
 # =========================
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    # 원하면 시스템 프롬프트를 대화에 포함시킬 수도 있어(숨김 처리 가능)
-    # st.session_state.messages.append({"role":"system","content":"너는 친절한 한국어 챗봇이야. 짧고 명확하게 답해줘."})
 
 # =========================
 # 6) 말풍선 렌더링 함수
@@ -143,8 +182,7 @@ if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     render_bubble("user", user_input)
 
-    # (2) 모델 호출용 messages 구성
-    # 시스템 프롬프트를 “항상 적용”하고 싶으면 아래처럼 매번 앞에 붙이는 방식이 깔끔해!
+    # (2) 모델 호출용 messages 구성 (system은 매번 앞에 붙이기)
     messages_for_api = [
         {"role": "system", "content": "너는 친절한 한국어 챗봇이야. 핵심만 짧고 명확하게 답해줘."},
         *st.session_state.messages
