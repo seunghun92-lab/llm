@@ -242,3 +242,4 @@ practice.ipynb
 app.py
 __pycache__
 requirements.txt
+.jsonl
