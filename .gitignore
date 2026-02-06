@@ -245,3 +245,10 @@ requirements.txt
 .jsonl
 *.mp3
 *.jsonl
+The_Adventures_of_Tom_Sawyer.pdf
+db
+faiss/
+*.db
+*.csv
+*.pdf
+*.json
